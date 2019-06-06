@@ -1,0 +1,18 @@
+What is online learning/incremental learning?
+https://scikit-learn.org/0.15/modules/scaling_strategies.html
+
+A case study on unsupervised, online learning algorithms (paper)
+http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.102.3009&rep=rep1&type=pdf
+LDA implementation: 
+https://radimrehurek.com/gensim/models/ldamodel.html
+
+Gmail online learning (paper)
+http://static.googleusercontent.com/media/research.google.com/en//pubs/archive/36955.pdf
+
+Trees, ID3:
+https://sefiks.com/2017/11/20/a-step-by-step-id3-decision-tree-example/
+https://medium.com/datadriveninvestor/tree-algorithms-id3-c4-5-c5-0-and-cart-413387342164
+
+Gradient Boosting:
+https://sefiks.com/2018/10/04/a-step-by-step-gradient-boosting-decision-tree-example/
+https://github.com/Microsoft/LightGBM
