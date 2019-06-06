@@ -1,6 +1,7 @@
 import numpy as np
 import random
-
+import numpy as np
+import matplotlib.pyplot as plt
 
 class HybridModel(object):
 
@@ -18,7 +19,7 @@ class HybridModel(object):
         """
         Imaginary blackbox that returns scores per document (now just a random Numpy array)
         """
-        blackbox = np.random.uniform(0,100,[5]).round(2).tolist()
+        blackbox = np.random.uniform(0,100,[20]).round(2).tolist()
         data = {}
         for i, standard in enumerate(list_of_standards):
             data[standard] = (blackbox[i], 0)
@@ -37,7 +38,7 @@ class HybridModel(object):
 
     def compute(self):
         pass
-
+    
 
 if __name__ == "__main__":
     """
@@ -47,15 +48,24 @@ if __name__ == "__main__":
     user-votes: 2
 
     How do you rank this?
-    global model * user specific
     """
-    standards = ["ISO/IEC 17025", "Coast Guard 4323", "IEEE 403403", "ISO 12312312"]
+    standards = [   "ISO/IEC 17025", "Coast Guard 4323", "IEEE 462", "ISO XJA",
+                    "ISO/IEC 549", "Army 54", "DAD 45", "ISO 4546"
+                    "ISO/IEC 23", "Coast Guard 64", "IEEE 34", "ISO 664"
+                    "ISO/DAS 32", "Navy 64", "ASD 34", "ISO 99"
+                ]
     model = HybridModel(standards)
     print(model.data)
     # User accepts, rejects, or suggests each standard for training 
-    for i in range(1,6):
-        user_choices = np.random.choice(a=[False, True], size=(5,)).tolist()
+    for i in range(1,101):
+        user_choices = np.random.choice(a=[False, True], size=(20,)).tolist()
         feedback = dict(zip(standards, user_choices))
         print("Iteration %s" % i)
-        print(model.data)
         model.update(feedback)
+    x = []
+    y = []
+    for doc in (model.data):
+        x.append(model.data[doc][0])
+        y.append(model.data[doc][1])
+    plt.scatter(x, y)
+    plt.show()
