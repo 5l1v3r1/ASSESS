@@ -2,6 +2,8 @@ import numpy as np
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import uuid
+
 
 class HybridModel(object):
 
@@ -19,7 +21,7 @@ class HybridModel(object):
         """
         Imaginary blackbox that returns scores per document (now just a random Numpy array)
         """
-        blackbox = np.random.uniform(0,100,[20]).round(2).tolist()
+        blackbox = np.random.uniform(0,100,[100]).round(2).tolist()
         data = {}
         for i, standard in enumerate(list_of_standards):
             data[standard] = (blackbox[i], 0)
@@ -49,16 +51,12 @@ if __name__ == "__main__":
 
     How do you rank this?
     """
-    standards = [   "ISO/IEC 17025", "Coast Guard 4323", "IEEE 462", "ISO XJA",
-                    "ISO/IEC 549", "Army 54", "DAD 45", "ISO 4546"
-                    "ISO/IEC 23", "Coast Guard 64", "IEEE 34", "ISO 664"
-                    "ISO/DAS 32", "Navy 64", "ASD 34", "ISO 99"
-                ]
+    standards = [str(uuid.uuid4())[:8] for x in range(0,100)]
     model = HybridModel(standards)
     print(model.data)
     # User accepts, rejects, or suggests each standard for training 
     for i in range(1,101):
-        user_choices = np.random.choice(a=[False, True], size=(20,)).tolist()
+        user_choices = np.random.choice(a=[False, True], size=(100,)).tolist()
         feedback = dict(zip(standards, user_choices))
         print("Iteration %s" % i)
         model.update(feedback)
