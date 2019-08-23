@@ -14,7 +14,7 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 standards_dir = 'standards'
 json_output_dir = 'output'
 ieee_standards='IEEE-standards_rev1.csv'
-df_ieee = pd.read_csv(os.path.join(standards_dir, 'IEEE-standards_rev1.csv'), index_col=0)
+df_ieee = pd.read_csv(os.path.join(standards_dir, 'IEEE-standards_rev1.csv'), index_col=0, encoding = 'unicode_escape')
 
 @app.route('/')
 def index():
@@ -47,7 +47,7 @@ def train():
 
     # read the ieee standards into a pandas dataframe
 
-    df_ieee = pd.read_csv(os.path.join(standards_dir, 'iso_ieee.csv'), index_col=0)
+    df_ieee = pd.read_csv(os.path.join(standards_dir, 'iso_ieee.csv'), index_col=0, encoding = 'unicode_escape')
     df_ieee=df_ieee.reset_index()
     df_ieee=df_ieee.fillna('')
     # read the json and extract the scopes
@@ -76,15 +76,16 @@ def train():
     for i in range(len(texts_abs)):
         if texts_int[i][:12]=='Introduction':
             texts_int[i]=texts_int[i][12:]
-        texts_all.append((texts_abs[i] + texts_scp[i] + texts_pur[i]+texts_int[i]).decode('utf-8','ignore'))
+        texts_all.append((texts_abs[i] + texts_scp[i] + texts_pur[i]+texts_int[i]))
+        #texts_all.append((texts_abs[i] + texts_scp[i] + texts_pur[i]+texts_int[i]).decode('utf-8','ignore'))
 
     df_ieee['Introduction']=texts_int
 
     # build models for system 1 and system 2
 
-    print 'building model 1...'
+    print('building model 1...')
     model.build_system1(texts_all, 2)
-    print 'model 1 ready.'
+    print('model 1 ready.')
     # print 'building model 2...'
     # model.build_system2(texts_all)
     # print 'model 2 ready.'
@@ -105,25 +106,23 @@ def predict():
 
         text=request.args.get('text','')
         filename='temp_text'
-        file=open(filename,'w')
+        file=open(filename,'wb')
         file.write(text.encode('utf-8','ignore'))
         file.flush()
         file.close()
         scope=text
 
+        #Gui's code was reordered here to ensure the submit your text acted the same way as the submit your file part
         try:
             bashCommand = "java -cp standards_extraction/lib/tika-app-1.16.jar:standards_extraction/bin StandardsExtractor " + \
                           filename + " 0.75 > "+filename+".json"
             output = subprocess.check_output(['bash', '-c', bashCommand])
-            print output
+            js = json.load(open(filename + '.json'))
+            standard_refs = js['standard_references']
 
         except:
 
-            try:
-                js = json.load(open(filename + '.json'))
-                standard_refs = js['standard_references']
-            except:
-                print 'no standard refs found!'
+            standard_refs = 'No standards referenced found!'
 
     if request.method == 'POST':
         # check if the post request has the file part
@@ -141,7 +140,6 @@ def predict():
 
         bashCommand = "java -cp standards_extraction/lib/tika-app-1.16.jar:standards_extraction/bin StandardsExtractor \"" + filename + "\" 0.75 > \"" + filename + ".json\""
         output = subprocess.check_output(['bash', '-c', bashCommand])
-
         standard_refs = []
         try:
             js = json.load(open(filename+".json"))
@@ -151,27 +149,30 @@ def predict():
         try:
             standard_refs = js['standard_references']
         except:
-            print 'no standard refs found!'
+            standard_refs = 'No standards referenced found!'
 
-    print '\n'.join(standard_refs)
+
+    print('\n'.join(standard_refs))
     result_index_sys1,result_sim_sys1=model.use_system1(scope, lbd_sys1, 10)
     # result_index_sys1, result_sim_sys1=model.use_system2(scope, lbd_sys2, 10)
 
     result={}
-    result['refs']=standard_refs
-    result['system1_titles'] = [str(x).decode('utf-8','ignore')+' '+str(y).decode('utf-8','ignore') for x,y in zip(list(df_ieee.ix[result_index_sys1]['Id']),list(df_ieee.ix[result_index_sys1]['Title']))]
-    result['system1_abstracts'] = [str(x).decode('utf-8','ignore') for x in list(df_ieee.ix[result_index_sys1]['Abstract'])]
-    result['system1_purposes'] = [str(x).decode('utf-8', 'ignore') for x in
-                                   list(df_ieee.ix[result_index_sys1]['Purpose'])]
-    result['system1_introductions'] = [str(x).decode('utf-8', 'ignore') for x in
-                                   list(df_ieee.ix[result_index_sys1]['Introduction'])]
-    result['system1_scopes'] = [str(x).decode('utf-8', 'ignore') for x in
-                                   list(df_ieee.ix[result_index_sys1]['Scope'])]
+    #this was done to ensure the outputted list of standards referenced was always with bullets
+    if type(standard_refs) == str:
+        result['refs']=[standard_refs]
+    elif type(standard_refs) == list:
+        result['refs']=standard_refs
+    result['system1_titles'] = [str(x).encode('ascii',errors='ignore').decode('ascii')+' '+str(y).encode('ascii',errors='ignore').decode('ascii') for x,y in zip(list(df_ieee.ix[result_index_sys1]['Id']),list(df_ieee.ix[result_index_sys1]['Title']))]
+    result['system1_abstracts'] = [str(x).encode('ascii',errors='ignore').decode('ascii') for x in list(df_ieee.ix[result_index_sys1]['Abstract'])]
+    result['system1_purposes'] = [str(x).encode('ascii',errors='ignore').decode('ascii') for x in
+                                  list(df_ieee.ix[result_index_sys1]['Purpose'])]
+    result['system1_introductions'] = [str(x).encode('ascii',errors='ignore').decode('ascii') for x in
+                                  list(df_ieee.ix[result_index_sys1]['Introduction'])]
+    result['system1_scopes'] = [str(x).encode('ascii',errors='ignore').decode('ascii') for x in
+                                  list(df_ieee.ix[result_index_sys1]['Scope'])]
     result['system1_links'] = list(df_ieee.ix[result_index_sys1]['Link'])
     result['system1_sim'] = result_sim_sys1
-
     return json.dumps(result)
-
 
 if __name__ == "__main__":
     train()
