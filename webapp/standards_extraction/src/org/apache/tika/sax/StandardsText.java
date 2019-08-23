@@ -57,10 +57,11 @@ public class StandardsText {
 
 	// Regular expression to match the "APPLICABLE DOCUMENTS" and equivalent
 	// sections
-	private static final String REGEX_APPLICABLE_DOCUMENTS = "(?i:.*APPLICABLE\\sDOCUMENTS|REFERENCE|STANDARD|REQUIREMENT|GUIDELINE|COMPLIANCE.*)";
+	private static final String REGEX_APPLICABLE_DOCUMENTS = "(?i:.*APPLICABLE\\sDOCUMENTS|REFERENCE|STANDARD|REQUIREMENT|GUIDELINE|COMPLIANCE.*)"; 
 
 	// Regular expression to match the alphanumeric identifier of the standard
-	private static final String REGEX_IDENTIFIER = "(?<identifier>([0-9]{3,}|([A-Z]+(-|_|\\.)?[0-9]{2,}))((-|_|\\.)?[A-Z0-9]+)*)";
+	//3 was changed to 2 to pick up more identifiers
+	private static final String REGEX_IDENTIFIER = "(?<identifier>([0-9]{2,}|([A-Z]+(-|_|\\.)?[0-9]{2,}))((-|_|\\.)?[A-Z0-9]+)*)";//new line here??
 
 	// Regular expression to match the standard organization
 	private static final String REGEX_ORGANIZATION = StandardOrganizations.getOrganzationsRegex();
@@ -71,9 +72,23 @@ public class StandardsText {
 
 	// Regular expression to match a string that is supposed to be a standard
 	// reference
-	private static final String REGEX_FALLBACK = "\\(?" + "(?<mainOrganization>[A-Z]\\w+)"
-			+ "\\)?((\\s?(?<separator>\\/)\\s?)(\\w+\\s)*\\(?" + "(?<secondOrganization>[A-Z]\\w+)" + "\\)?)?"
+	private static final String REGEX_FALLBACK = "\\(?" + 
+			//rough draft of extractor standard organization name spelled out
+			//regex below is looking for either a standard organization not abbreviated and all caps OR a standard organization
+			//spelled out, and only those that are between 3 and 8 words longs
+			//this does not account for standard organizations spelled out that have not completely upper case names such as 
+			//Access for Learning because of the for
+			"(?<mainOrganization>(([A-Z]\\w+)|(([A-Z]\\w+\\s?){3,8})))" +
+			//below is original
+			//"(?<mainOrganization>[A-Z]\\w+)" + 
+			"\\)?((\\s?(?<separator>\\/)\\s?)(\\w+\\s)*\\(?" + "(?<secondOrganization>[A-Z]\\w+)" + "\\)?)?"
 			+ REGEX_STANDARD_TYPE + "?" + "(-|\\s)?" + REGEX_IDENTIFIER;
+
+			//regex is also picking up new line characters between the organization and the identifier and counting it as a standard even if it is:
+			//I like the IEEE.
+			//53 pigs were found dead.
+			//^that is picked up as IEEE 53 (obviously this is a terrible example)
+			//using /r and /n don't seem to work so i dunno
 
 	// Regular expression to match the standard organization within a string
 	// that is supposed to be a standard reference
@@ -140,16 +155,16 @@ public class StandardsText {
 
 		Pattern pattern = Pattern.compile(REGEX_FALLBACK);
 		Matcher matcher = pattern.matcher(text);
-
 		while (matcher.find()) {
 			StandardReferenceBuilder builder = new StandardReference.StandardReferenceBuilder(
 					matcher.group("mainOrganization"), matcher.group("identifier"))
 							.setSecondOrganization(matcher.group("separator"), matcher.group("secondOrganization"));
 			score = 0.25;
 
-			// increases by 0.25 the score of references which include the name of a known standard organization
+			// increases by 0.5 the score of references which include the name of a known standard organization
+			//this was changed so the standard extractor actually worked :)
 			if (matcher.group().matches(REGEX_STANDARD)) {
-				score += 0.25;
+				score += 0.5;
 			}
 			
 			// increases by 0.25 the score of references which include the word "Publication" or "Standard"
@@ -186,3 +201,4 @@ public class StandardsText {
 		return standards;
 	}
 }
+
